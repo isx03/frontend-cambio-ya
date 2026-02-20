@@ -24,11 +24,10 @@ const Auth = () => {
 
   useEffect(() => {
     // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/dashboard");
-      }
-    });
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      navigate("/dashboard");
+    }
   }, [navigate]);
 
   const validateDNI = (dni: string) => {
@@ -40,24 +39,44 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch("http://localhost:8000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          clave: password,
+        }),
       });
 
-      if (error) throw error;
+      const data = await response.json();
+
+      if (data.access_token) {
+        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("user_data", JSON.stringify({
+          id: data.id,
+          email: data.email,
+          user_metadata: {
+            full_name: data.nombre_completo
+          }
+        }));
+      } else {
+        throw new Error(data.detail);
+      }
 
       toast({
         title: "¡Bienvenido!",
         description: "Has iniciado sesión correctamente.",
       });
       navigate("/dashboard");
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Error desconocido";
       toast({
         title: "Error al iniciar sesión",
-        description: error.message === "Invalid login credentials"
+        description: message === "Invalid login credentials"
           ? "Correo o contraseña incorrectos"
-          : error.message,
+          : message,
         variant: "destructive",
       });
     } finally {
@@ -105,10 +124,11 @@ const Auth = () => {
         description: "Tu cuenta ha sido creada exitosamente. Ahora puedes iniciar sesión.",
       });
       setIsLogin(true); // Switch to login view
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Error desconocido";
       toast({
         title: "Error al crear cuenta",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -155,8 +175,8 @@ const Auth = () => {
             <button
               onClick={() => setIsLogin(true)}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${isLogin
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
                 }`}
             >
               Iniciar Sesión
@@ -164,8 +184,8 @@ const Auth = () => {
             <button
               onClick={() => setIsLogin(false)}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${!isLogin
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
                 }`}
             >
               Crear Cuenta
