@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +46,24 @@ const BankAccounts = () => {
   const [currency, setCurrency] = useState("PEN");
   const [accountType, setAccountType] = useState("savings");
 
+  const loadAccounts = useCallback(async (userId: string) => {
+    try {
+      const response = await fetch(`http://localhost:8000/bank_accounts?user_id=${userId}`);
+      if (!response.ok) {
+        throw new Error("Error al cargar cuentas");
+      }
+      const data = await response.json();
+      setAccounts(data || []);
+    } catch (error) {
+      console.error("Error loading accounts:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las cuentas bancarias.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     const userData = localStorage.getItem("user_data");
@@ -62,21 +80,7 @@ const BankAccounts = () => {
     }
 
     setIsLoading(false);
-  }, [navigate]);
-
-  const loadAccounts = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("bank_accounts")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Error loading accounts:", error);
-    } else {
-      setAccounts(data || []);
-    }
-  };
+  }, [navigate, loadAccounts]);
 
   const handleAddAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,7 +122,7 @@ const BankAccounts = () => {
         title: "¡Cuenta registrada!",
         description: "Tu cuenta bancaria ha sido agregada correctamente.",
       });
-      // Note: loadAccounts still fetches from Supabase, so new account won't show up
+      loadAccounts(user.id);
       setIsAdding(false);
       resetForm();
     } catch (error) {
