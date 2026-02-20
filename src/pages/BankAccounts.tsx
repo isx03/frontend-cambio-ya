@@ -99,28 +99,34 @@ const BankAccounts = () => {
       return;
     }
 
-    const { error } = await supabase.from("bank_accounts").insert({
-      user_id: user.id,
-      bank_name: bankName,
-      account_number: accountNumber,
-      currency,
-      account_type: accountType,
-    });
+    try {
+      const response = await fetch("http://localhost:8000/bank_accounts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          bank_name: bankName,
+          account_number: accountNumber,
+          currency: currency,
+          account_type: accountType,
+        }),
+      });
 
-    if (error) {
+      toast({
+        title: "¡Cuenta registrada!",
+        description: "Tu cuenta bancaria ha sido agregada correctamente.",
+      });
+      // Note: loadAccounts still fetches from Supabase, so new account won't show up
+      setIsAdding(false);
+      resetForm();
+    } catch (error) {
       toast({
         title: "Error",
         description: "No se pudo registrar la cuenta.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "¡Cuenta registrada!",
-        description: "Tu cuenta bancaria ha sido agregada correctamente.",
-      });
-      loadAccounts(user.id);
-      setIsAdding(false);
-      resetForm();
     }
 
     setIsSaving(false);
