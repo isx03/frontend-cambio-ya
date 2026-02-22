@@ -48,7 +48,7 @@ const BankAccounts = () => {
 
   const loadAccounts = useCallback(async (userId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/bank_accounts?user_id=${userId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_HOST}/bank_accounts?user_id=${userId}`);
       if (!response.ok) {
         throw new Error("Error al cargar cuentas");
       }
@@ -104,7 +104,7 @@ const BankAccounts = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/bank_accounts", {
+      const response = await fetch(`${import.meta.env.VITE_API_HOST}/bank_accounts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

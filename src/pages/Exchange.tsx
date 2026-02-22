@@ -75,17 +75,17 @@ const Exchange = () => {
       const fetchAccounts = async () => {
         try {
           // Verify if user has ANY accounts
-          /*const resAll = await fetch(`http://localhost:8000/bank_accounts?user_id=${user.id}`);
+          /*const resAll = await fetch(`${import.meta.env.VITE_API_HOST}/bank_accounts?user_id=${user.id}`);
           const dataAll = await resAll.json();
           setAccounts(dataAll || []);*/
 
           // Fetch source accounts based on fromCurrency
-          const resSource = await fetch(`http://localhost:8000/bank_accounts?user_id=${user.id}&currency=${fromCurrency}`);
+          const resSource = await fetch(`${import.meta.env.VITE_API_HOST}/bank_accounts?user_id=${user.id}&currency=${fromCurrency}`);
           const dataSource = await resSource.json();
           setSourceAccounts(dataSource || []);
 
           // Fetch dest accounts based on toCurrency
-          const resDest = await fetch(`http://localhost:8000/bank_accounts?user_id=${user.id}&currency=${toCurrency}`);
+          const resDest = await fetch(`${import.meta.env.VITE_API_HOST}/bank_accounts?user_id=${user.id}&currency=${toCurrency}`);
           const dataDest = await resDest.json();
           setDestAccounts(dataDest || []);
 
@@ -148,7 +148,7 @@ const Exchange = () => {
     setIsSubmitting(true);
 
     try {
-      await fetch("http://localhost:8000/operaciones-cambio", {
+      await fetch(`${import.meta.env.VITE_API_HOST}/operaciones-cambio`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
