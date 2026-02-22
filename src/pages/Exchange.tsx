@@ -147,35 +147,41 @@ const Exchange = () => {
 
     setIsSubmitting(true);
 
-    // Simulate operation creation
-    const { error } = await supabase.from("exchange_operations").insert({
-      user_id: user?.id,
-      source_currency: fromCurrency,
-      target_currency: toCurrency,
-      source_amount: parseFloat(amount),
-      target_amount: parseFloat(result),
-      exchange_rate: rate,
-      source_account_id: sourceAccountId,
-      target_account_id: destAccountId,
-      transfer_number: transferNumber,
-      status: "pending",
-    });
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo registrar la operación.",
-        variant: "destructive",
+    try {
+      await fetch("http://localhost:8000/operaciones-cambio", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+        },
+        body: JSON.stringify({
+          user_id: user?.id,
+          monto_envio: parseFloat(amount),
+          moneda_envio: fromCurrency,
+          monto_recibo: parseFloat(result),
+          moneda_recibo: toCurrency,
+          tipo_cambio: rate,
+          cuenta_origen_id: parseInt(sourceAccountId),
+          cuenta_destino_id: parseInt(destAccountId),
+          numero_operacion: transferNumber
+        })
       });
-    } else {
+
       setStep("complete");
       toast({
         title: "¡Operación registrada!",
         description: "Tu cambio está siendo procesado.",
       });
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "No se pudo registrar la operación.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   };
 
   if (isLoading) {
