@@ -36,6 +36,8 @@ const Exchange = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const [sourceAccounts, setSourceAccounts] = useState<BankAccount[]>([]);
+  const [destAccounts, setDestAccounts] = useState<BankAccount[]>([]);
   const [step, setStep] = useState<Step>("simulate");
 
   // Form state
@@ -63,11 +65,38 @@ const Exchange = () => {
     if (userData) {
       const userObj = JSON.parse(userData);
       setUser(userObj);
-      loadAccounts(userObj.id);
     }
 
     setIsLoading(false);
   }, [navigate]);
+
+  useEffect(() => {
+    if (user) {
+      const fetchAccounts = async () => {
+        try {
+          // Verify if user has ANY accounts
+          /*const resAll = await fetch(`http://localhost:8000/bank_accounts?user_id=${user.id}`);
+          const dataAll = await resAll.json();
+          setAccounts(dataAll || []);*/
+
+          // Fetch source accounts based on fromCurrency
+          const resSource = await fetch(`http://localhost:8000/bank_accounts?user_id=${user.id}&currency=${fromCurrency}`);
+          const dataSource = await resSource.json();
+          setSourceAccounts(dataSource || []);
+
+          // Fetch dest accounts based on toCurrency
+          const resDest = await fetch(`http://localhost:8000/bank_accounts?user_id=${user.id}&currency=${toCurrency}`);
+          const dataDest = await resDest.json();
+          setDestAccounts(dataDest || []);
+
+          setAccounts(dataSource || dataDest || [])
+        } catch (error) {
+          console.error("Error fetching accounts:", error);
+        }
+      };
+      fetchAccounts();
+    }
+  }, [user, fromCurrency, toCurrency]);
 
   useEffect(() => {
     const numAmount = parseFloat(amount) || 0;
@@ -77,16 +106,7 @@ const Exchange = () => {
     setResult(converted.toFixed(2));
   }, [amount, fromCurrency, rate]);
 
-  const loadAccounts = async (userId: string) => {
-    const { data } = await supabase
-      .from("bank_accounts")
-      .select("*")
-      .eq("user_id", userId);
-    setAccounts(data || []);
-  };
-
-  const sourceAccounts = accounts.filter((acc) => acc.currency === fromCurrency);
-  const destAccounts = accounts.filter((acc) => acc.currency === toCurrency);
+  // Source and dest accounts are now fetched directly from the API.
 
   const handleConfirm = () => {
     const numAmount = parseFloat(amount) || 0;
